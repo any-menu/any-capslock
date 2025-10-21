@@ -1,0 +1,395 @@
+;; 重要声明：
+;; - 你应该使用 cmd_allowed 版本运行该脚本，如 `kanata_gui_cmd_allowed.exe`
+;; - 按住 Ctrl+Esc+Space 可以强制退出Kanata程序
+;; - 你应该在VSCode等IDE中编辑，保证字符是等宽的，不然编辑起来对不齐
+;;
+;; 命名：
+;; 采取了变量前缀定义，由于kanata语法的设计，变量一般是5个及以下字母组成
+;; 我将前两个的字母作为层的前缀，以前缀开始的变量往往只有当前层才能使用，通过这种设计可以将脚本模块化、可切割化
+;; 当前，如果是通用的变量则不需要层前缀
+;; 例如：l1ly表示L1前缀的Layout，l1j表示L1层的j键
+;;
+;; 手势 (推荐执行)：
+;; 当使用部分层时，不遵循左右食指的手势
+;; Caps与其子层，一般左食指更接近D，所以此时食指按E
+;; 数字层时，jkl三列及左列正常，但右列可以用无名指按。初始位置三指在 `m,.`
+;;
+;; 这里省略了一些区域，你可以自己加上：
+;; prnt  slck  pause nlck
+;; ins   home  pgup
+;; del   end   pgdn
+;;       up
+;; left  down  right
+
+(defcfg
+  danger-enable-cmd yes
+)
+;; 全局的宏
+(defalias
+  cHom (macro C-home)
+  cEnd(macro C-end)
+)
+
+;; 配置键盘按键 - Dvorak 阵列布局。对于异型键盘或有额外按键的键盘，自行修改
+(defsrc
+  esc   f1    f2    f3    f4    f5    f6    f7    f8    f9    f10   f11   f12
+  grv   1     2     3     4     5     6     7     8     9     0     -     =     bspc
+  tab   q     w     e     r     t     y     u     i     o     p     [     ]     \
+  caps  a     s     d     f     g     h     j     k     l     ;     '     ret
+  lsft  z     x     c     v     b     n     m     ,     .     /     rsft
+  lctl  lmet  lalt              spc               ralt  rmet  rctl
+)
+
+;; 默认层 - Windows 的 QWERTY 按键
+;;
+;;零层
+;;零　  一　  二　  三　  四　  五　|  六　  七　  八　  九　  十　  十一  十二  　　 
+;;一　  　　  　　  　　  　　  　　|  　　  　　  　　  　　  　　  　　  　　  　　 
+;;二　  　　  　　  　　  　　  　　|  　　  　　  　　  　　  　　  　　  　　  　　 
+;;三　  　　  　　  　　  　　  　　|  　　  　　  　　  　　  　　  　　  　　
+;;一层  　　  　　  　　  　　  　　|  　　  　　  　　  　　  　　  符层  　　  　　 
+;;五　  　　  　　  　　  　　  空格|  　　  　　  　　  　　  连点  　　  　　  　　 
+;;
+(deflayer l0ly
+  esc   f1    f2    f3    f4    f5    f6    f7    f8    f9    f10   f11   f12
+  grv   1     2     3     4     5     6     7     8     9     0     -     =     bspc
+  tab   q     w     e     r     t     y     u     i     o     p     [     ]     \
+  @l01  a     s     d     f     g     h     j     k     l     ;     @l02  ret
+  lsft  z     x     c     v     b     n     m     ,     .     /     @l03
+  lctl  lmet  lalt              spc               ralt  rmet  rctl
+)
+(defalias
+  l01 (layer-toggle l1ly)     ;; Caps层
+  l02 (tap-hold 0 150
+    '
+    (layer-toggle l7ly)       ;; 符号层 TODO 不应该按时间，应该按按下后有无再按下其他键，不然打字速度快了/慢了都有问题
+  )
+  l03 (macro-repeat mltp 50)  ;; 按住模拟连点器
+)
+
+;; TODO Shift+Space -> Caps+Shift+Space (简化，操作糖)
+;; TODO Ctrl+Space
+
+;; -------------------------------------------------------------------------------
+
+;; Caps层 - 用于输入控制字符等
+;; 需要注意：不要与Shift键冲突
+;;
+;; 注意词层的位置给了D和G两个键，这是因为：
+;;   如果没有其他修饰键，G的位置更顺手
+;;   如果有Ctrl、Shift修饰键，D的位置更顺手
+;;   这是牺牲空间利用率换取手感的一种方式。当没有修饰键时，应该用前者，否则用后者
+;;
+;; 使用频率：Caps层>行层>词层>数层>页层
+;; 
+;; 数字层设计:
+;; 不同于方向键，切换窗口的情况下，右手握鼠标的概率很大。所以尽量放左半区
+;; win+数字顺手度: 4 5 2 3 1 6 | 8 9 7 0 - = (updating)
+;; -和+可以来放大缩小窗口
+;; 记忆/通用度: 尽量分配一些大家电脑都有的，也可以辅助拼音记忆
+;; 频率: 文件资源管理器 > 浏览器 > 文本编辑器 > 翻译
+;; (1) 浏览器 (2) 翻译 (3) 文本编辑器 (4) 文件资源管理器 (5) 文本编辑器2
+;; 其中文件资源管理器的创建是 win+e，也比较好用
+;; 指位分配建议: caps区通常将左手区右移一个键位。12中指，3456食指
+;;
+;;一层
+;;零　  一　  二　  三　  四　  五　 | 六　  七　  八　  九　  十　  十一  十二  辅助记忆学习表，左上从数字6开始。如遇部分字符显示不正常，可能是字体不支持。最好是用VSCode打开该说明
+;;一　  　　  　　  　　  　　  　　 | 　　  　　  　　  　　  　　  　　  　　  原Caps层       行层(扩大范围)  页层 (扩大范围到页)  词层略，和行层差不多
+;;二　  　　  　　  　　  　　  　　 | 　　  最上  　　  　　  　　  　　  　　  6️⃣🟦🟦🟦🟦  6️⃣🟦🟦🟦🟦  6️⃣🟦🟦🟦🟦
+;;三　  　　  　　  数层  页层  数层 | 最上  上　  前删  后删  　　  　　  　　  ⏫🔼🔙🔜🟦  ⏫⏫🔚🔜🟦  ⏫🔼🔙🔜🟦
+;;四　  　　  　　  词层  行层  词层 | 最左  左　  下　  右　  最右  　　  　　  ⏪️◀️🔽▶️⏩️  ⏪️⏪️⏬⏩️⏩️  ⏫⏪️🔽⏩️⏬
+;;五　  　　  　　  　　  　　  回车 | 　　  　　  最下  　　  　　  　　  　　  🟦🟦⏬🟦🟦  🟦🟦⏬🟦🟦  🟦🟦⏬🟦🟦
+;;
+(deflayer l1ly
+  caps  f1    f2    f3    f4    f5    f6    f7    f8    f9    f10   f11   f12
+  caps  @l11  @l12  @l13  @l14  @l15  @l16  @cHom @l18  @l19  @l110  @l111 @l112 bspc
+  caps  -     -     @l1e  @l1r  @l1e  @cHom up    bspc  del   -     -     -     -
+  -     -     -     @l1d  @l1f  @l1d  home  left  down  right end   -     ret
+  lsft  -     -     -     -     -     -     -     @cEnd -     -     rsft
+  lctl  lmet  lalt              ret               ralt  rmet  rctl
+)
+(defalias
+  l1d (tap-hold 0 150
+    (macro C-left S-C-right)  ;; 词-全选
+    lctl                      ;; 词层 (大部分情况能自动满足，无需声明新层)
+  )
+  l1f (tap-hold 0 150
+    (macro home S-end)        ;; 行-全选
+    (layer-toggle l2ly)       ;; 行层
+  )
+  l1r (tap-hold 0 150
+    (macro C-a)               ;; 页-全选
+    (layer-toggle l3ly)       ;; 页层
+  )
+  l1e (layer-toggle l9ly)     ;; 数字层
+  
+  l11 (macro M-1)
+  l12 (macro M-2)
+  l13 (macro M-3)
+  l14 (macro M-4)
+  l15 (macro M-5)
+  l16 (macro M-6)
+  ;; l17 (macro M-7)
+  l18 (macro M-8)
+  l19 (macro M-9)
+  l110 (macro M-0)
+  l111 (macro M--)
+  l112 (macro M-=)
+)
+
+;; Caps-行层 - 行选、扩大范围
+;;
+;;行层
+;;零　  一　  二　  三　  四　  五　 | 六　  七　  八　  九　  十　  十一  十二
+;;一　  　　  　　  　　  　　  　　 | 　　  　　  　　  　　  　　  　　  　　  
+;;二　  　　  　　  　　  　　  　　 | 　　  最上　　　  　　  　　  　　  　　  6️⃣⏫🟦🟦🟦
+;;三　  　　  　　  　　  　　  　　 | 最上  最上　行删  行删  　　  　　  　　  ⏫⏫🔚🔜🟦
+;;四　  　　  　　  　　  　　  选行 | 最左  最左  最下　最右  最右  　　  　　  ⏪️⏪️⏬⏩️⏩️
+;;五　  　　  　　  　　  　　  复制 | 　　  　　  最下　　　  　　  　　  　　  🟦🟦⏬🟦🟦
+;;
+(deflayer l2ly
+  caps  f1    f2    f3    f4    f5    f6    f7    f8    f9    f10   f11   f12
+  caps  -     -     -     -     -     -     @cHom -     -     -     -     -     bspc
+  tab   -     -     -     -     -     @cHom @cHom @l2i  @l2o  -     -     -     \
+  -     -     -     -     -     -     home  home  @cEnd end   end   -     ret
+  lsft  -     -     -     -     -     -     -     @cEnd -     -     rsft
+  lctl  lmet  lalt              @l2rt             ralt  rmet  rctl
+)
+(defalias
+  l2i (macro S-home bspc)
+  l2o (macro S-end del)
+  l2rt (macro home S-end C-c end S-ret C-v)
+)
+
+;; Caps-页层 - 页选、扩大范围
+;;
+;;页层
+;;零　  一　  二　  三　  四　  五　 | 六　  七　  八　  九　  十　  十一  十二
+;;一　  　　  　　  　　  　　  　　 | 　　  　　  　　  　　  　　  　　  　　  　
+;;二　  　　  　　  　　  　　  　　 | 　　  最上  　　  　　  　　  　　  　　  　
+;;三　  　　  　　  　　  　　  　　 | 最上  上页  前删  后删  　　  　　  　
+;;四　  　　  　　  　　  　　  　　 | 最上  左页  下页  右页  最下  　
+;;五　  　　  　　  　　  　　  复制 | 　　  　　  最下  　　  　
+;;
+(deflayer l3ly
+  caps  f1    f2    f3    f4    f5    f6    f7    f8    f9    f10   f11   f12
+  caps  -     -     -     -     -     -     @cHom -     -     -     -     -     bspc
+  tab   -     -     -     -     -     @cHom pgup  bspc  del   -     -     -     \
+  -     -     -     -     -     -     @cHom @l3j  pgdn  @l3l  @cEnd -     ret
+  lsft  -     -     -     -     -     -     -     @cEnd -     -     rsft
+  lctl  lmet  lalt              ret               ralt  rmet  rctl
+)
+(defalias
+  l3j (macro C-pgup)
+  l3l (macro C-pgdn)
+)
+
+;; -------------------------------------------------------------------------------
+
+;; 数字层
+;;
+;; 相关设计过程详见个人网站的 [[Kanata/HotKey Soft]] 页面
+;;
+;;数层
+;;esc   f1    f2    f3    f4    f5  | f6    f7    f8    f9    f10   f11   f12
+;;grv   -     -     -     -     -   | -     nlck  /     *     bspc  -     -     -
+;;tab   -     -     -     -     -   | /     7     8     9     -!    (     )     -
+;;caps  -     -     -     -     -   | *     4     5     6     +     -     -
+;;lsft  -     -     -     -     ^   | .     1     2     3     =     =/ret
+;;-     -     -                 0   |             -     -     -
+;;
+(deflayer l9ly
+  -     f1    f2    f3    f4    f5    f6    f7    f8    f9    f10   f11   f12
+  caps  -     -     -     -     -     -     nlck  @l98  @l99  bspc  -     =     bspc
+  -     -     -     -     -     -     @l9y  7     8     9     @l9o2 @l9o3 @l9o4 \
+  -     -     -     -     -     -     @l9h  4     5     6     @l9l2 -     ret
+  lsft  -     -     -     -     @l9b  @l9n  1     2     3     =     ret
+  lctl  lmet  lalt              0                 ralt  rmet  rctl
+)
+(defalias
+  l9b (unicode "^")
+  
+  l9n (unicode ".")
+  l9h (unicode "*")
+  l9y (unicode "/")
+  l99 (unicode "*")
+  l98 (unicode "/")
+
+  l9l2 (unicode "+")
+  l9o2 (unicode "-")
+  l9o3 (unicode "(")
+  l9o4 (unicode ")")
+)
+
+;; -------------------------------------------------------------------------------
+
+;; 符号层 (部分强制半角/全角)
+;; 右侧记忆参考：按行依次是：中文、成对引号、成对括号、多行
+;;
+;;符层                                      !1    !2    !3
+;;esc   f1    f2    f3    f4    f5  | f6    f7    f8    f9    f10   f11   f12
+;;grv   -     -     -     -     -   | 「」  【】   《》  “”    -     -     -     -
+;;tab   !     ?     -     /     -!  | ''    ""    ``    “”    -     -     -     -
+;;caps  -    ……     、    *     +   | -     ()    []   {}     -     -     -
+;;lsft  _    ，     。    ——    =   | //    /**/  ```   >     -     -
+;;-     -     -                 0   |             -     -     -
+;;
+(deflayer l7ly
+  esc   f1    f2    f3    f4    f5    f6    f7    f8    f9    f10   f11   f12
+  grv   -     -     -     -     -     @l76  @l77  @l78  @l79  -     -     -     -
+  tab   @l7q  @l7w  -     @l7r  @l7t  @l7y  @l7u  @l7i  @l7o  -     -     -     -
+  @l7cl -     @l7s  @l7d  @l7f  @l7g  -     @l7j  @l7k  @l7l  -     -     -
+  @l7cl @l7z  @l7x  @l7c  @l7v  @l7b  -     @l7m  @l7m2 -     -     -
+  -     -     -                 0                 -     -     -
+)
+(defalias
+  l7cl () ;; (layer-toggle l8ly)
+
+  ;; 注意连续输入符号有时要间隔一下，不然顺序可能是错的 (两个无序操作之间可以不加数字来间隔)
+  ;; TODO，应该直接黏贴输出，不然撤回操作可能是分多步进行
+
+  l7q (unicode "!")
+  l7w (unicode "?")
+  l7s (macro (unicode "…") (unicode "…"))
+  l7d (unicode "、")
+  l7r (unicode "/")
+  l7f (unicode "*")
+  l7z (unicode "_")
+  l7x (unicode "，")
+  l7c (unicode "。")
+  l7v (macro (unicode "—") (unicode "—"))
+  l7t (unicode "-")
+  l7g (unicode "+")
+  l7b (unicode "=")
+
+  ;; 中文
+  l76 (macro
+    (clipboard-save 0) 100
+    C-c 100
+    (clipboard-cmd-set powershell.exe -c r#"$v = ($Input | Select-Object -First 1); Write-Host -NoNewLine "「$v」""#) 400
+    C-v 100
+    (clipboard-restore 0)
+  )
+  l77 (macro
+    (clipboard-save 0) 100
+    C-c 100
+    (clipboard-cmd-set powershell.exe -c r#"$v = ($Input | Select-Object -First 1); Write-Host -NoNewLine "【$v】""#) 400
+    C-v 100
+    (clipboard-restore 0)
+  )
+  l78 (macro
+    (clipboard-save 0) 100
+    C-c 100
+    (clipboard-cmd-set powershell.exe -c r#"$v = ($Input | Select-Object -First 1); Write-Host -NoNewLine "《$v》""#) 400
+    C-v 100
+    (clipboard-restore 0)
+  )
+  l79 (macro
+    (clipboard-save 0) 100
+    C-c 100
+    (clipboard-cmd-set powershell.exe -c r#"$v = ($Input | Select-Object -First 1); Write-Host -NoNewLine "“$v”""#) 400
+    C-v 100
+    (clipboard-restore 0)
+  )
+
+  ;; 成对引号
+  ;; l7k (macro (unicode "`") (unicode "`") 5 left)
+  l7y (macro
+    (clipboard-save 0) 100
+    C-c 100
+    (clipboard-cmd-set powershell.exe -c r#"$v = ($Input | Select-Object -First 1); Write-Host -NoNewLine "'$v'""#) 400
+    C-v 100
+    (clipboard-restore 0)
+  )
+  l7u (macro
+    (clipboard-save 0) 100
+    C-c 100
+    (clipboard-cmd-set powershell.exe -c r#"$v = ($Input | Select-Object -First 1); Write-Host -NoNewLine "`"$v`"""#) 400
+    C-v 100
+    (clipboard-restore 0)
+  )
+  l7i (macro
+    (clipboard-save 0) 100
+    C-c 100
+    (clipboard-cmd-set powershell.exe -c r#"$v = ($Input | Select-Object -First 1); Write-Host -NoNewLine "``$v``""#) 400
+    C-v 100
+    (clipboard-restore 0)
+  )
+  l7o (macro
+    (clipboard-save 0) 100
+    C-c 100
+    (clipboard-cmd-set powershell.exe -c r#"$v = ($Input | Select-Object -First 1); Write-Host -NoNewLine "“$v”""#) 400
+    C-v 100
+    (clipboard-restore 0)
+  )
+
+  ;; 成对括号
+  l7j (macro
+    (clipboard-save 0) 100
+    C-c 100
+    (clipboard-cmd-set powershell.exe -c r#"$v = ($Input | Select-Object -First 1); Write-Host -NoNewLine "($v)""#) 400
+    C-v 100
+    (clipboard-restore 0)
+  )
+  l7k (macro
+    (clipboard-save 0) 100
+    C-c 100
+    (clipboard-cmd-set powershell.exe -c r#"$v = ($Input | Select-Object -First 1); Write-Host -NoNewLine "[$v]""#) 400
+    C-v 100
+    (clipboard-restore 0)
+  )
+  l7l (macro
+    (clipboard-save 0) 100
+    C-c 100
+    (clipboard-cmd-set powershell.exe -c r#"$v = ($Input | Select-Object -First 1); Write-Host -NoNewLine "{$v}""#) 400
+    C-v 100
+    (clipboard-restore 0)
+  )
+
+  ;; 多行
+  l7m (macro
+    (clipboard-save 0) 20
+    (clipboard-set r#"```
+
+```"#) 200
+    C-v 20
+    up 20
+    (clipboard-restore 0)
+  )
+  l7m2 (macro
+    (clipboard-save 0) 20
+    (clipboard-set r#"/**
+ * 
+ */"#) 200
+    C-v 20
+    up 20
+    (clipboard-restore 0)
+  )
+  ;; l78 (macro
+  ;;   (unicode "/") 5 (unicode "*") (unicode "*") 5 S-ret 5
+  ;;   (unicode " ") 5 (unicode "*") 5 (unicode " ") 5 S-ret 5
+  ;;   (unicode " ") 5 (unicode "*") 5 (unicode "/") 5 up    ;; 第三行的自动缩进问题不一定
+  ;; )
+)
+
+;; 符号层2 (与手机的长按按键想匹配，适用于小键盘，特点是里面塞的更多的是一些 `Shift+` 就可以敲出来的符号)
+;;
+;;符层2
+;;esc   f1    f2    f3    f4    f5  | f6    f7    f8    f9    f10   f11   f12
+;;grv   1     2     3     4     5   | 6     7     8     9     0     -     -     -
+;;tab   1     2     3     4     5   | 6     7     8     9     0
+;;caps  sAll  ^     -     ;     curs| _     #     "     '     -
+;;lsft  `     cut   copy  paste @   | /     :     -     -
+;;-     -     -                 0   |             !     ?     -
+;;
+
+;; -------------------------------------------------------------------------------
+
+;; TODO 剪切版实现的选中后加符号功能
+;; 1. 多行自动加上 /**/、//、>
+;; 2. print/console.log(变量名) -> print/console.log("变量名", 变量名)
+;; 3. 翻译 (不替换，仅悬浮)
+
+;; 这部分也许输入法做会更流畅：
+;; 1. 自动日期 create_time: xxxx-xx-xx
+;; 2. emoji
