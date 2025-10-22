@@ -6,7 +6,7 @@
 
 ## 文档、学习、使用
 
-- [AnyMenu 文档首页](https://any-menu.github.io/any-menu/)
+- [AnyMenu 文档首页](https://any-menu.github.io/any-menu/) | [AnyMenu Github 仓库](https://github.com/any-menu/any-menu/)
 - [AnyCaps 文档首页](https://any-menu.github.io/any-menu/zh/quick_keys)
 
 - [按键设计方案, 教程](https://any-menu.github.io/any-menu/zh/quick_keys/Tutorial.md)
